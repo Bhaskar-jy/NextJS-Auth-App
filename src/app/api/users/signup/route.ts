@@ -1,47 +1,50 @@
-import {connect} from '@/dbConfig/dbConfig';
-import User from '@/models/userModel';
-import {NextRequest, NextResponse} from 'next/server';
-import bcryptjs from 'bcryptjs'
-import { sendEmail } from '@/helpers/mailer';
+import { connect } from "@/dbConfig/dbConfig";
+import User from "@/models/userModel";
+import { NextRequest, NextResponse } from "next/server";
+import bcryptjs from "bcryptjs";
+import { sendEmail } from "@/helpers/mailer";
 
-connect()
+connect();
 
-export async function POST(request:NextRequest) {
-    try {
-        const reqBody = await request.json()
-        const {username, email, Password} = reqBody;
+export async function POST(request: NextRequest) {
+  try {
+    const reqBody = await request.json();
+    const { username, email, Password } = reqBody;
 
-        //validation
-        console.log(reqBody);
+    //validation
+    console.log(reqBody);
 
-        const user = await User.findOne({email})
+    const user = await User.findOne({ email });
 
-        if (user) {
-            return NextResponse.json({error: "User already exist"}, {status: 400})
-        }
+    if (user) {
+      return NextResponse.json(
+        { error: "User already exist" },
+        { status: 400 }
+      );
+    }
 
-        const salt = await bcryptjs.genSalt(10);
-        const hashedPassword = await bcryptjs.hash(Password, salt)
+    const salt = await bcryptjs.genSalt(10);
+    const hashedPassword = await bcryptjs.hash(Password, salt);
 
-        const newUser = new User({
-            username, email,Password: hashedPassword
-        })
+    const newUser = new User({
+      username,
+      email,
+      Password: hashedPassword,
+    });
 
-        const savedUser = await newUser.save()
-        console.log(savedUser)
+    const savedUser = await newUser.save();
+    console.log(savedUser);
 
-        //send verification email
+    //send verification email
 
-        await sendEmail({email, emailType: "VERIFY", userId:savedUser._id})
+    await sendEmail({ email, emailType: "VERIFY", userId: savedUser._id });
 
-        return NextResponse.json({
-            message: "User Registered successfully",
-            success: true,
-            savedUser
-        })
-
-    } catch (error: any) {
-        return NextResponse.json({error: error.message},{status: 500})
-    }    
+    return NextResponse.json({
+      message: "User Registered successfully",
+      success: true,
+      savedUser,
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
-
